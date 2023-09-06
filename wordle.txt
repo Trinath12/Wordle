@@ -1,0 +1,88 @@
+word(red,color).
+word(green,color).
+word(blue,color).
+word(yellow,color).
+word(black,color).
+word(square,shape).
+word(circle,shape).
+word(rectangle,shape).
+word(pentagon,shape).
+word(triangle,shape).
+play:-
+    write('Let us begin the Wordle game!!!'), nl,
+    start.
+
+
+start:-
+    write('Categories available are: '),
+    categories(Cats),
+    write(Cats), nl,
+    cat_choice(C),
+    len_choice(L, C),
+    Guesses is L + 1,
+    write('You have '), write(Guesses), write(' guesses.'), nl, nl,
+    setof(W, pick_word(W, L, C), Words),
+    random_member(CorrectWord, Words),
+    guess_word(CorrectWord, L, Guesses).
+
+is_category(C):- word(_, C).
+
+categories(L):- setof(X, is_category(X), L).
+
+pick_word(W, L, C):- word(W, C), atom_length(W, L).
+
+cat_choice(C):-
+    write('Choose a category: '), nl,
+    read(T),
+    (is_category(T), C = T
+    ;
+    write('This is not a category in the list.'), nl,
+    cat_choice(C)
+    ).
+
+len_choice(L, C):-
+    write('Choose a length: '), nl,
+    read(T),
+    (pick_word(_, T, C), L = T
+    ;
+    write('There are no words of this length. '), nl,
+    len_choice(L, C)
+    ).
+
+guess_word(CorrectWord, ReqLen, Guesses):-
+    write('Enter a word composed of '), write(ReqLen), write(' letters:'), nl,
+    read(Word_guessed),
+    (
+        Word_guessed = CorrectWord,
+        write('Congrats! You won.'), nl
+    ;
+        Guesses = 1,
+        write('Sorry! You lost'), nl
+    ;
+        (
+            atom_length(Word_guessed, ReqLen),            
+            atom_chars(CorrectWord, Als),
+            atom_chars(Word_guessed, Letters_guessed),
+            cl(Als, Letters_guessed, Cls),
+            cp(Als, Letters_guessed, Cps),
+            write('Correct letters are: '), write(Cls), nl,
+            write('Correct letters in correct positions are: '), write(Cps), nl,
+            NewGuesses is Guesses - 1
+        ;
+            write('Word is not composed of '), write(ReqLen), write(' letters. Try again.'), nl,
+            NewGuesses is Guesses
+        ),
+        write('Remaining Guesses are '), write(NewGuesses), nl, nl,
+        guess_word(CorrectWord, ReqLen, NewGuesses)
+    ).
+
+
+cl(Als, Letters_guessed, Cls):- intersection(Letters_guessed, Als, CL), list_to_set(CL, Cls).
+
+cp([], [], []).
+cp([H|T1], [H|T2], [H|T3]):- cp(T1, T2, T3).
+cp([H1|T1], [H2|T2], T3):- H1 \= H2, cp(T1, T2, T3).
+
+
+
+available_length(L):- word(W, _), atom_length(W, L).
